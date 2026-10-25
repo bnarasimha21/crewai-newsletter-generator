@@ -28,7 +28,7 @@ python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Or using conda
-conda create -n newsletter-env python=3.9
+conda create -n newsletter-env python=3.11
 conda activate newsletter-env
 ```
 
@@ -53,17 +53,25 @@ sudo apt-get install wkhtmltopdf
 **For Windows:**
 Download and install from: https://wkhtmltopdf.org/downloads.html
 
+5. Set the API keys the crew needs (as environment variables):
+
+```bash
+export OPENAI_API_KEY=...   # default LLM used by the CrewAI agents
+export SERPER_API_KEY=...   # web search tool used by the researcher agent
+```
+
 ## Project Structure
 
 ```
 newsletter-generator/
 ├── src/
-│   └── crew_experiment/
-│       ├── __init__.py
-│       ├── crew.py
-│       └── config/
+│   ├── crew.py                  # researcher, reporting_analyst, pdf_generator agents and tasks
+│   ├── config/
+│   │   ├── agents.yaml
+│   │   └── tasks.yaml
+│   └── tools/
+│       └── html_to_pdf_tool.py  # pdfkit/wkhtmltopdf tool
 ├── app.py
-├── htmltopdf.py
 ├── requirements.txt
 └── README.md
 ```
@@ -85,11 +93,11 @@ streamlit run app.py
 
 6. Download the PDF using the "Download PDF" button
 
-7. View your generation history in the table below
+7. View this session's generation history in the table below (it resets when the page is reloaded)
 
 ## Requirements
 
-- Python 3.8+
+- Python 3.10+
 - CrewAI
 - Streamlit
 - pdfkit
@@ -101,8 +109,8 @@ See `requirements.txt` for complete list of dependencies.
 ## Configuration
 
 The application uses the following configuration files:
-- CrewAI configuration in `src/crew_experiment/config/`
-- PDF generation settings in `htmltopdf.py`
+- CrewAI agent and task configuration in `src/config/` (`agents.yaml`, `tasks.yaml`)
+- PDF generation in `src/tools/html_to_pdf_tool.py`
 
 ## Contributing
 

@@ -19,11 +19,20 @@ def display_pdf(pdf_path):
     pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="700" height="1000" type="application/pdf"></iframe>'
     st.markdown(pdf_display, unsafe_allow_html=True)
 
+PDF_PATH = "report.pdf"
+
 def process_topic(topic: str):
     inputs = {'topic': topic}
+    # Remove any stale PDF so a failed conversion is not mistaken for success
+    if os.path.exists(PDF_PATH):
+        os.remove(PDF_PATH)
     with st.spinner('Generating newsletter...'):
         CrewExperiment().crew().kickoff(inputs=inputs)
-    return "report.pdf"
+    return PDF_PATH if os.path.exists(PDF_PATH) else None
+
+# Initialise history on first load (session_state.history is read below on every run)
+if "history" not in st.session_state:
+    st.session_state.history = pd.DataFrame(columns=["Topic", "Generated At"])
 
 # Streamlit UI
 st.title("Newsletter Generator")
@@ -36,7 +45,15 @@ with st.form("newsletter_form"):
 # Process form submission
 if submitted and topic:
     pdf_file = process_topic(topic)
-    if pdf_file:
+    if not pdf_file:
+        st.error("The crew finished but no report.pdf was produced. "
+                 "Check that wkhtmltopdf is installed and the API keys are set.")
+    else:
+        st.session_state.history = pd.concat(
+            [st.session_state.history,
+             pd.DataFrame([{"Topic": topic,
+                            "Generated At": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}])],
+            ignore_index=True)
         st.success("Newsletter generated successfully!")
         
         # Display PDF
@@ -55,3 +72,4 @@ if submitted and topic:
 # Display history
 if not st.session_state.history.empty:
     st.subheader("Newsletter History")
+    st.dataframe(st.session_state.history)
