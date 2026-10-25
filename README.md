@@ -17,7 +17,7 @@ A Streamlit web application that generates newsletters on any topic using CrewAI
 
 ```bash
 git clone https://github.com/bnarasimha21/crewai-newsletter-generator.git
-cd newsletter-generator
+cd crewai-newsletter-generator
 ```
 
 2. Create and activate a virtual environment:
@@ -63,7 +63,7 @@ export SERPER_API_KEY=...   # web search tool used by the researcher agent
 ## Project Structure
 
 ```
-newsletter-generator/
+crewai-newsletter-generator/
 ├── src/
 │   ├── crew.py                  # researcher, reporting_analyst, pdf_generator agents and tasks
 │   ├── config/
