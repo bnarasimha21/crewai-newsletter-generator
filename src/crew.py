@@ -72,7 +72,6 @@ class CrewExperiment():
 	def html_to_pdf_task(self) -> Task:
 		return Task(
 			config=self.tasks_config['html_to_pdf_task'],
-			input_file='report.html',
 			tools=[HtmlToPdfTool()],
 			verbose=True
 		)

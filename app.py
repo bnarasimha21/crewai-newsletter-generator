@@ -20,12 +20,15 @@ def display_pdf(pdf_path):
     st.markdown(pdf_display, unsafe_allow_html=True)
 
 PDF_PATH = "report.pdf"
+HTML_PATH = "report.html"
 
 def process_topic(topic: str):
     inputs = {'topic': topic}
-    # Remove any stale PDF so a failed conversion is not mistaken for success
-    if os.path.exists(PDF_PATH):
-        os.remove(PDF_PATH)
+    # Remove stale outputs so a failed run is not mistaken for success and an
+    # old report.html is not converted when the reporting task fails
+    for stale in (PDF_PATH, HTML_PATH):
+        if os.path.exists(stale):
+            os.remove(stale)
     with st.spinner('Generating newsletter...'):
         CrewExperiment().crew().kickoff(inputs=inputs)
     return PDF_PATH if os.path.exists(PDF_PATH) else None

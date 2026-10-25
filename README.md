@@ -16,7 +16,7 @@ A Streamlit web application that generates newsletters on any topic using CrewAI
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/your-repo/newsletter-generator.git
+git clone https://github.com/bnarasimha21/crewai-newsletter-generator.git
 cd newsletter-generator
 ```
 
