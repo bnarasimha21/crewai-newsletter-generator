@@ -1,0 +1,33 @@
+{
+  "topic": "AI agents",
+  "search_results": [
+    {
+      "title": "Framework Adds Native Multi-Agent Memory",
+      "link": "https://www.devdaily.example.com/agent-memory-framework",
+      "snippet": "A popular open source agent framework shipped a built-in shared memory store, letting multiple agents read and write the same session state.",
+      "date": "2 days ago",
+      "source": "Dev Daily Example"
+    },
+    {
+      "title": "Enterprise Pilot Automates Support Triage With Agents",
+      "link": "https://biz.example.com/agent-support-triage-pilot",
+      "snippet": "A mid-size software company reported a pilot where an agent pipeline triaged and routed 40 percent of inbound support tickets without a human.",
+      "date": "6 days ago",
+      "source": "Biz Example"
+    },
+    {
+      "title": "Researchers Publish Agent Evaluation Benchmark",
+      "link": "https://labs.example.org/agent-eval-benchmark",
+      "snippet": "A research lab released a new benchmark suite for scoring tool-using agents on multi-step tasks with partial credit.",
+      "date": "9 days ago",
+      "source": "Labs Example"
+    },
+    {
+      "title": "Browser Vendor Ships Built-In Agent Mode",
+      "link": "https://www.devdaily.example.com/browser-agent-mode",
+      "snippet": "A major browser added an experimental mode that lets an agent fill forms and navigate pages on a user's behalf, gated behind a permission prompt.",
+      "date": "15 days ago",
+      "source": "Dev Daily Example"
+    }
+  ]
+}

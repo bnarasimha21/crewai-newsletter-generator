@@ -1,0 +1,33 @@
+{
+  "topic": "cybersecurity",
+  "search_results": [
+    {
+      "title": "Critical Flaw Patched In Widely Used Logging Library",
+      "link": "https://www.secwire.example.com/logging-library-critical-patch",
+      "snippet": "Maintainers of a widely used logging library shipped an emergency patch for a flaw that allowed remote code execution on vulnerable servers.",
+      "date": "1 day ago",
+      "source": "Sec Wire Example"
+    },
+    {
+      "title": "Ransomware Group Shifts To Double Extortion Tactics",
+      "link": "https://venture.example.com/ransomware-double-extortion-shift",
+      "snippet": "Security researchers observed a ransomware group increasingly stealing data before encrypting it, then threatening separate leaks.",
+      "date": "5 days ago",
+      "source": "Venture Example"
+    },
+    {
+      "title": "Agency Mandates Multi-Factor Auth For Contractors",
+      "link": "https://labs.example.org/agency-mfa-mandate-contractors",
+      "snippet": "A government agency now requires multi-factor authentication for all contractor access to its internal systems starting next quarter.",
+      "date": "9 days ago",
+      "source": "Labs Example"
+    },
+    {
+      "title": "Browser Extension Store Removes Data-Stealing Add-Ons",
+      "link": "https://www.secwire.example.com/extension-store-removes-stealers",
+      "snippet": "A browser's extension store removed a batch of add-ons found to be exfiltrating browsing history and saved form data.",
+      "date": "16 days ago",
+      "source": "Sec Wire Example"
+    }
+  ]
+}

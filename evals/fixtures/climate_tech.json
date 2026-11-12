@@ -1,0 +1,33 @@
+{
+  "topic": "climate tech",
+  "search_results": [
+    {
+      "title": "Grid-Scale Battery Plant Comes Online",
+      "link": "https://www.energywire.example.com/grid-battery-plant-online",
+      "snippet": "A new grid-scale battery storage facility began operating, adding enough capacity to power roughly 60,000 homes during peak demand.",
+      "date": "1 day ago",
+      "source": "Energy Wire Example"
+    },
+    {
+      "title": "Direct Air Capture Plant Breaks Ground",
+      "link": "https://venture.example.com/direct-air-capture-groundbreaking",
+      "snippet": "Construction started on a direct air capture facility designed to remove carbon dioxide directly from the atmosphere at megaton scale.",
+      "date": "4 days ago",
+      "source": "Venture Example"
+    },
+    {
+      "title": "Cities Pilot Heat Pump Retrofit Subsidy",
+      "link": "https://labs.example.org/heat-pump-retrofit-subsidy",
+      "snippet": "Several cities launched a pilot subsidy program covering part of the cost of replacing gas furnaces with electric heat pumps in older homes.",
+      "date": "10 days ago",
+      "source": "Labs Example"
+    },
+    {
+      "title": "Offshore Wind Project Clears Final Permit",
+      "link": "https://www.energywire.example.com/offshore-wind-final-permit",
+      "snippet": "An offshore wind project received its final regulatory permit, clearing the way for construction to begin next year.",
+      "date": "18 days ago",
+      "source": "Energy Wire Example"
+    }
+  ]
+}

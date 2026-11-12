@@ -1,0 +1,33 @@
+{
+  "topic": "quantum computing",
+  "search_results": [
+    {
+      "title": "Quantum Error Correction Hits New Milestone",
+      "link": "https://www.technews.example.com/quantum-error-correction",
+      "snippet": "Researchers report a breakthrough in fault-tolerant qubits, cutting the logical error rate by an order of magnitude using a new surface-code variant.",
+      "date": "3 days ago",
+      "source": "Tech News Example"
+    },
+    {
+      "title": "Startup Raises Funding For Quantum Chips",
+      "link": "https://venture.example.com/quantum-chip-funding",
+      "snippet": "A new chipmaker closed a Series B funding round to scale production of superconducting qubit chips for enterprise customers.",
+      "date": "5 days ago",
+      "source": "Venture Example"
+    },
+    {
+      "title": "Government Lab Opens Quantum Research Center",
+      "link": "https://labs.example.org/quantum-research-center",
+      "snippet": "A national lab opened a dedicated quantum computing wing focused on materials science applications and workforce training.",
+      "date": "8 days ago",
+      "source": "Labs Example"
+    },
+    {
+      "title": "Quantum Networking Demo Over 100km Fiber",
+      "link": "https://www.technews.example.com/quantum-networking-demo",
+      "snippet": "A university team demonstrated entanglement distribution over 100 kilometers of standard telecom fiber, a step toward a quantum internet.",
+      "date": "12 days ago",
+      "source": "Tech News Example"
+    }
+  ]
+}
