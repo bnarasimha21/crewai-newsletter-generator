@@ -1,78 +1,79 @@
-import streamlit as st
-import os
-import sys
+"""Streamlit UI: calls newsletter.pipeline.generate, never touches cwd itself.
+
+Replaces the old version, which imported src.crew directly, wrote
+report.html/report.pdf into the process's working directory (so two
+concurrent generations stomped on each other), and showed a generic error
+message with no way to tell a search failure from a render failure.
+"""
+
+from __future__ import annotations
+
 from pathlib import Path
-from datetime import datetime
-import pandas as pd
-import base64
 
-# Add the root directory to Python path
-root_dir = Path(__file__).parent
-sys.path.append(str(root_dir))
+import streamlit as st
 
-from src.crew import CrewExperiment
+from newsletter.errors import RenderFailed, SearchFailed, Timeout
+from newsletter.history import list_runs
+from newsletter.pipeline import generate
 
-def display_pdf(pdf_path):
-    """Display PDF in Streamlit"""
-    with open(pdf_path, "rb") as f:
-        base64_pdf = base64.b64encode(f.read()).decode('utf-8')
-    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="700" height="1000" type="application/pdf"></iframe>'
-    st.markdown(pdf_display, unsafe_allow_html=True)
+RUNS_DIR = "runs"
+HISTORY_DB = Path(RUNS_DIR) / "history.db"
 
-PDF_PATH = "report.pdf"
-HTML_PATH = "report.html"
-
-def process_topic(topic: str):
-    inputs = {'topic': topic}
-    # Remove stale outputs so a failed run is not mistaken for success and an
-    # old report.html is not converted when the reporting task fails
-    for stale in (PDF_PATH, HTML_PATH):
-        if os.path.exists(stale):
-            os.remove(stale)
-    with st.spinner('Generating newsletter...'):
-        CrewExperiment().crew().kickoff(inputs=inputs)
-    return PDF_PATH if os.path.exists(PDF_PATH) else None
-
-# Initialise history on first load (session_state.history is read below on every run)
-if "history" not in st.session_state:
-    st.session_state.history = pd.DataFrame(columns=["Topic", "Generated At"])
-
-# Streamlit UI
 st.title("Newsletter Generator")
 
-# Input section
 with st.form("newsletter_form"):
     topic = st.text_input("Enter a topic", placeholder="e.g., Artificial Intelligence")
+    template = st.selectbox("Template", ["classic", "compact"])
     submitted = st.form_submit_button("Generate Newsletter")
 
-# Process form submission
 if submitted and topic:
-    pdf_file = process_topic(topic)
-    if not pdf_file:
-        st.error("The crew finished but no report.pdf was produced. "
-                 "Check that wkhtmltopdf is installed and the API keys are set.")
-    else:
-        st.session_state.history = pd.concat(
-            [st.session_state.history,
-             pd.DataFrame([{"Topic": topic,
-                            "Generated At": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}])],
-            ignore_index=True)
-        st.success("Newsletter generated successfully!")
-        
-        # Display PDF
-        st.subheader("Generated Newsletter")
-        display_pdf(pdf_file)
-        
-        # Download button
-        with open(pdf_file, "rb") as file:
+    with st.spinner("Researching and writing..."):
+        try:
+            result = generate(topic, out_dir=RUNS_DIR, template=template, history_db=HISTORY_DB)
+        except SearchFailed as exc:
+            st.error(f"Could not find enough verifiable sources for '{topic}': {exc}")
+        except RenderFailed as exc:
+            st.error(f"The newsletter was written but could not be rendered to PDF: {exc}")
+        except Timeout as exc:
+            st.error(f"Generation timed out before finishing: {exc}")
+        else:
+            st.success(f"Newsletter generated: {len(result.brief.items)} items.")
+
+            st.subheader("Generated Newsletter")
+            with open(result.pdf_path, "rb") as pdf_file:
+                pdf_bytes = pdf_file.read()
+            if hasattr(st, "pdf"):
+                st.pdf(pdf_bytes)
+            else:
+                st.warning("This Streamlit version has no st.pdf; use the download button below.")
+
             st.download_button(
                 label="Download PDF",
-                data=file,
-                file_name=pdf_file,
-                mime="application/pdf"
+                data=pdf_bytes,
+                file_name=f"{template}-{result.run_dir.name}.pdf",
+                mime="application/pdf",
             )
 
-# Display history
-if not st.session_state.history.empty:
-    st.subheader("Newsletter History")
-    st.dataframe(st.session_state.history)
+            st.subheader("Sources")
+            for item in result.brief.items:
+                st.markdown(f"- [{item.title}]({item.source_url}) (source: {item.source_name})")
+
+# Display history from SQLite, not an in-memory session list, so it survives
+# a page reload and shows runs started from the CLI too.
+st.subheader("Newsletter History")
+runs = list_runs(HISTORY_DB)
+if runs:
+    st.dataframe(
+        [
+            {
+                "Topic": run.topic,
+                "Status": run.status,
+                "Started": run.started_at,
+                "Finished": run.finished_at,
+                "Run dir": run.run_dir,
+            }
+            for run in runs
+        ]
+    )
+else:
+    st.caption("No runs yet.")

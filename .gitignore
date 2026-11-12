@@ -54,3 +54,11 @@ python_files/tests/*/.data/.coverage*
 python_files/tests/*/.data/*/.coverage*
 src/testTestingRootWkspc/coverageWorkspace/.coverage
 venv/
+
+# Newsletter generator app-specific
+runs/
+*.egg-info/
+.env
+.env.local
+report.html
+report.pdf

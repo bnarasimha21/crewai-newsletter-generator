@@ -1,0 +1,28 @@
+research_task:
+  description: >
+    Research {topic}. Today's date is {today}. Use the search tool to find
+    5 to 8 recent items (news, articles, releases) about {topic}.
+    Only use URLs that the search tool actually returned to you, never invent
+    one. Prefer items published within the last 30 days; if you cannot find
+    a publication date for an item, leave the date blank rather than guessing.
+    Do not return two items with the same or near-identical title, and do not
+    return more than 2 items from the same domain.
+  expected_output: >
+    A structured list of 5 to 8 items, each with a title, a one sentence
+    summary, the exact source_url returned by the search tool, a source_name,
+    and a published date if one was found.
+  agent: researcher
+
+writer_task:
+  description: >
+    Using only the research items provided in context (do not add new items,
+    URLs or facts), write a newsletter brief about {topic} for {today}:
+    a short intro paragraph, one summary sentence per supplied item (reusing
+    its title, source_url, source_name and published date exactly as given),
+    and a short outro paragraph.
+  expected_output: >
+    A structured brief with topic, generated_on, intro, the same items as
+    supplied (title, summary, source_url, source_name, published), and outro.
+  agent: writer
+  context:
+    - research_task
