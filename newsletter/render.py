@@ -20,6 +20,7 @@ socket or filesystem call is made.
 from __future__ import annotations
 
 import logging
+import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -65,14 +66,25 @@ class RenderReport:
 
 
 class _WarningCapture(logging.Handler):
-    """Collects WeasyPrint's own log warnings (e.g. a blocked resource)."""
+    """Collects WeasyPrint's own log warnings (e.g. a blocked resource).
+
+    WeasyPrint logs to the single module-level "weasyprint" logger, which
+    is shared across every concurrent html_to_pdf() call. A handler added
+    to that logger receives every record logged by ANY thread while it is
+    attached, not just the one from its own render, so two concurrent
+    renders would otherwise see each other's warnings. Filter by the
+    thread id that created this capture (logging already stamps every
+    LogRecord with record.thread) so each render only keeps its own.
+    """
 
     def __init__(self) -> None:
         super().__init__(level=logging.WARNING)
         self.records: list[str] = []
+        self._owner_thread = threading.get_ident()
 
     def emit(self, record: logging.LogRecord) -> None:
-        self.records.append(record.getMessage())
+        if record.thread == self._owner_thread:
+            self.records.append(record.getMessage())
 
 
 def html_to_pdf(html: str, pdf_path: str | Path) -> RenderReport:

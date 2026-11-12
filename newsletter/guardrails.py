@@ -31,7 +31,7 @@ gets gamed:
 from __future__ import annotations
 
 import re
-import string
+import unicodedata
 from collections import Counter
 from datetime import date, timedelta
 from urllib.parse import urlsplit, urlunsplit
@@ -40,8 +40,6 @@ from crewai.tasks.task_output import TaskOutput
 from pydantic import ValidationError
 
 from newsletter.models import Item, ResearchItems
-
-_PUNCT_TABLE = str.maketrans("", "", string.punctuation)
 
 
 def normalize_url(url: str) -> str:
@@ -54,9 +52,16 @@ def normalize_url(url: str) -> str:
 
 
 def normalize_title(title: str) -> str:
-    """Normalize a title for near-duplicate detection (see module docstring)."""
-    lowered = title.lower().translate(_PUNCT_TABLE)
-    return re.sub(r"\s+", " ", lowered).strip()
+    """Normalize a title for near-duplicate detection (see module docstring).
+
+    Strips punctuation by Unicode category ("P*"), not just the ASCII
+    string.punctuation table, so an LLM-written em dash (U+2014) or curly
+    quote (U+201C/U+201D) does not defeat near-duplicate detection against
+    an otherwise-identical ASCII-punctuated title.
+    """
+    lowered = title.lower()
+    stripped = "".join(ch for ch in lowered if not unicodedata.category(ch).startswith("P"))
+    return re.sub(r"\s+", " ", stripped).strip()
 
 
 def domain_of(url: str) -> str:
@@ -64,14 +69,21 @@ def domain_of(url: str) -> str:
 
     Strips a leading "www." so "www.example.com" and "example.com" count
     as one domain; any other subdomain ("blog.example.com") is kept as a
-    distinct domain. See module docstring for why.
+    distinct domain. See module docstring for why. Handles bracketed IPv6
+    literals (netloc like "[::1]:8080") by stripping the port from the
+    closing bracket, not by splitting on every colon, and strips a single
+    trailing "." from FQDNs so "example.com." and "example.com" count as
+    the same domain.
     """
     netloc = urlsplit(url.strip()).netloc.lower()
     netloc = netloc.split("@")[-1]  # drop userinfo if present
-    netloc = netloc.split(":")[0]  # drop port
+    if netloc.startswith("["):
+        netloc = netloc.split("]")[0] + "]"  # IPv6 literal, keep the brackets, drop any port
+    else:
+        netloc = netloc.split(":")[0]  # drop port
     if netloc.startswith("www."):
         netloc = netloc[len("www."):]
-    return netloc
+    return netloc.rstrip(".")
 
 
 def make_research_guardrail(

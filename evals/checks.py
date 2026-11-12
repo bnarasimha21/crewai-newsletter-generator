@@ -126,7 +126,13 @@ def check_faithfulness(brief: Brief, source_snippets: dict[str, str], min_overla
         summary_words = _content_words(item.summary)
         if not source_words or not summary_words:
             continue
-        overlap = len(source_words & summary_words) / len(source_words)
+        # Denominator is the SUMMARY's word count, not the source's: this
+        # measures what fraction of what the summary says is grounded in
+        # the source. Dividing by the source's word count instead (a prior
+        # bug here) let a short source snippet "fully match" after only a
+        # couple of shared words, so a summary could then append arbitrary
+        # fabricated claims and still score 100% overlap.
+        overlap = len(source_words & summary_words) / len(summary_words)
         if overlap < min_overlap:
             weak.append((item.title, round(overlap, 2)))
     if weak:

@@ -105,6 +105,17 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps({"status": "failed", "error": str(exc)}), file=sys.stdout)
         print(f"newsletter: failed: {exc}", file=sys.stderr)
         return EXIT_FAILED
+    except OSError as exc:
+        # generate() has several unguarded filesystem calls (making the
+        # run dir, writing brief.json/newsletter.html/trace.json) that are
+        # none of the typed pipeline errors above. Without this, a bad
+        # --out path (permission denied, disk full) raised a bare
+        # traceback on stderr with nothing on stdout, breaking the
+        # documented "always a JSON summary on stdout" contract this CLI
+        # promises.
+        print(json.dumps({"status": "failed", "error": str(exc)}), file=sys.stdout)
+        print(f"newsletter: failed: {exc}", file=sys.stderr)
+        return EXIT_FAILED
 
     summary = {
         "status": "success",

@@ -205,6 +205,7 @@ def generate(
     thread.join(timeout=timeout_seconds)
 
     if thread.is_alive():
+        recorder.detach()
         _safe_finish_run(
             history_path,
             history_id,
@@ -217,6 +218,7 @@ def generate(
     if "error" in error_holder:
         exc = error_holder["error"]
         status = "failed"
+        recorder.detach()
         _safe_finish_run(
             history_path,
             history_id,
@@ -243,6 +245,7 @@ def generate(
         try:
             html_to_pdf(html, pdf_path)
         except RenderFailed as exc:
+            recorder.detach()
             _safe_finish_run(
                 history_path,
                 history_id,

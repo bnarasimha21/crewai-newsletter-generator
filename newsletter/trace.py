@@ -112,6 +112,19 @@ class TraceRecorder:
         finally:
             self._trace.stages.append(StageTiming(name=name, seconds=time.perf_counter() - start))
 
+    def detach(self) -> None:
+        """Detach the counter's listeners from the process-wide event bus
+        without building a final Trace. Must be called on every exit path
+        of a run, not just the success path: `_CallCounter` registers on
+        `crewai_event_bus`, which is shared by the whole process, so a
+        failed or timed-out run that skips this leaks one more listener
+        on the bus forever. Idempotent: `_CallCounter.detach()` clears its
+        own handler list, so calling this more than once (e.g. once here
+        on an error path, then again from `finish()`) is a safe no-op the
+        second time.
+        """
+        self._counter.detach()
+
     def finish(self, *, search_calls: int, prompt_tokens: int = 0, completion_tokens: int = 0) -> Trace:
         self._counter.detach()
         self._trace.llm_calls = self._counter.llm_calls
