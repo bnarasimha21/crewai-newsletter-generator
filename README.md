@@ -1,15 +1,12 @@
 # Newsletter Generator with CrewAI
 
-A Streamlit web application that generates newsletters on any topic using CrewAI. The application converts the generated content into a downloadable PDF format.
-
-## Features
-
-- 🤖 AI-powered newsletter generation using CrewAI
-- 📝 Simple topic-based input interface
-- 📄 Automatic PDF conversion
-- 👀 Real-time PDF preview
-- ⬇️ PDF download capability
-- 🎯 User-friendly Streamlit interface
+Generates a researched, structured newsletter for any topic using a
+two-agent CrewAI crew (researcher, writer), renders it to HTML and PDF, and
+shows it in a Streamlit UI or a CLI. Research is gated by a guardrail that
+rejects fabricated citations, stale items and over-concentrated sources
+before the writer ever sees them; PDF rendering runs under a deny-all
+network/filesystem policy, so a newsletter can never be used to make the
+renderer fetch an internal URL or a local file.
 
 ## Installation
 
@@ -23,37 +20,35 @@ cd crewai-newsletter-generator
 2. Create and activate a virtual environment:
 
 ```bash
-# Using venv
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Or using conda
-conda create -n newsletter-env python=3.11
-conda activate newsletter-env
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```
 
 3. Install the required packages:
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements.txt       # runtime only
+pip install -r requirements-dev.txt   # + pytest, ruff, pypdf (adds requirements.txt too)
 ```
 
-4. Install wkhtmltopdf (required for PDF generation):
+4. WeasyPrint (used for PDF rendering) needs Pango on the system, not a
+   separate PDF engine like wkhtmltopdf:
 
-**For macOS:**
+**macOS:**
 ```bash
-brew install wkhtmltopdf
+brew install pango
 ```
 
-**For Ubuntu/Debian:**
+**Ubuntu/Debian:**
 ```bash
-sudo apt-get install wkhtmltopdf
+sudo apt-get install libpango-1.0-0 libpangoft2-1.0-0
 ```
 
-**For Windows:**
-Download and install from: https://wkhtmltopdf.org/downloads.html
+**Windows:** follow WeasyPrint's own install notes at
+https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#windows
 
-5. Set the API keys the crew needs (as environment variables):
+5. Set the API keys the crew needs (as environment variables), or use the
+   offline fake mode below if you just want to try the pipeline:
 
 ```bash
 export OPENAI_API_KEY=...   # default LLM used by the CrewAI agents
@@ -64,93 +59,120 @@ export SERPER_API_KEY=...   # web search tool used by the researcher agent
 
 ```
 crewai-newsletter-generator/
-├── src/
-│   ├── crew.py                  # researcher, reporting_analyst, pdf_generator agents and tasks
+├── newsletter/
+│   ├── pipeline.py        # generate(topic) -> NewsletterResult; the one entry point
+│   ├── crew.py             # researcher + writer agents/tasks (no LLM-driven PDF step)
+│   ├── models.py           # Item / ResearchItems / Brief (pydantic)
+│   ├── guardrails.py       # research guardrail: citation validity, freshness, dedupe, domain cap
+│   ├── provenance.py       # tracks which URLs the search tool actually returned, per run
+│   ├── render.py           # WeasyPrint HTML -> PDF under a deny-all url_fetcher
+│   ├── history.py          # SQLite run history + cost estimation
+│   ├── trace.py            # per-run token/latency tracing
+│   ├── pricing.yaml        # DigitalOcean serverless inference pricing used by history.py
+│   ├── fakes.py            # FakeLLM / FakeSearchTool, shared by tests, CLI fake mode, evals
+│   ├── __main__.py         # `python -m newsletter "topic" ...` CLI
 │   ├── config/
 │   │   ├── agents.yaml
 │   │   └── tasks.yaml
-│   └── tools/
-│       └── html_to_pdf_tool.py  # pdfkit/wkhtmltopdf tool
-├── app.py
+│   └── templates/
+│       ├── newsletter.html.j2
+│       └── print.css
+├── evals/
+│   ├── run.py               # `python -m evals.run --llm fake|do_serverless|claude_cli`
+│   ├── checks.py            # citation validity, freshness, source diversity, faithfulness, layout
+│   ├── llms.py               # real-LLM backends for do_serverless / claude_cli eval modes
+│   ├── fixtures/             # 6 fixed topics with fixed search results
+│   └── results/              # one markdown report per eval run, <date>-<model>.md
+├── tests/                    # pytest, see "Testing" below
+├── app.py                    # Streamlit UI
 ├── requirements.txt
+├── requirements-dev.txt
 └── README.md
 ```
 
 ## Usage
 
-1. Start the Streamlit application:
+### Streamlit UI
+
 ```bash
 streamlit run app.py
 ```
 
-2. Open your web browser and navigate to the provided URL (typically http://localhost:8501)
+Open the URL Streamlit prints (typically http://localhost:8501), enter a
+topic, pick a template, and generate. Past runs are listed from the
+SQLite-backed history, not just the current browser session.
 
-3. Enter a topic in the input field and click "Generate Newsletter"
+### CLI
 
-4. Wait for the generation process to complete
+```bash
+python -m newsletter "quantum computing" --template compact --out runs/
+```
 
-5. View the generated PDF directly in the browser
+Prints a JSON summary (run directory, HTML/PDF paths, item count, trace) to
+stdout and exits 0 on success, 1 on a pipeline failure, 2 on timeout
+(default 300s, override with `--timeout`).
 
-6. Download the PDF using the "Download PDF" button
+To run the whole pipeline offline with no API key, set `LLM_PROVIDER=fake`:
 
-7. View this session's generation history in the table below (it resets when the page is reloaded)
+```bash
+LLM_PROVIDER=fake python -m newsletter "quantum computing"
+```
 
-## Requirements
+## Testing
 
-- Python 3.10+
-- CrewAI
-- Streamlit
-- pdfkit
-- wkhtmltopdf
-- pandas
+```bash
+pytest -q          # all tests
+ruff check .       # lint
+```
 
-See `requirements.txt` for complete list of dependencies.
+Tests marked `integration` (most of them) exercise the real crew, render
+pipeline, or CLI end to end, offline, via `newsletter.fakes.FakeLLM` and
+`FakeSearchTool`: no network call and no API key needed to run the suite.
+
+## Evals
+
+```bash
+python -m evals.run --llm fake                       # offline, what CI runs
+python -m evals.run --llm do_serverless --model gpt-4o-mini  # needs DIGITALOCEAN_INFERENCE_API_KEY + DIGITALOCEAN_INFERENCE_BASE_URL
+python -m evals.run --llm claude_cli                  # needs a locally logged-in `claude` CLI
+```
+
+Runs the real two-agent crew over 6 fixed topics (`evals/fixtures/`) with
+fixed search results, scores the resulting brief on citation validity,
+freshness, source diversity, a word-overlap faithfulness proxy, and PDF
+layout, and writes a markdown report to `evals/results/<date>-<model>.md`.
+`--llm do_serverless` and `--llm claude_cli` are for local use (they call a
+real model); only `--llm fake` runs in CI.
 
 ## Configuration
 
-The application uses the following configuration files:
-- CrewAI agent and task configuration in `src/config/` (`agents.yaml`, `tasks.yaml`)
-- PDF generation in `src/tools/html_to_pdf_tool.py`
+- CrewAI agent and task prompts: `newsletter/config/agents.yaml`, `tasks.yaml`
+- Research guardrail thresholds (freshness window, per-domain cap, minimum
+  items): passed as keyword arguments to `newsletter.pipeline.generate()`,
+  also exposed as CLI flags (`--window-days`, `--max-per-domain`, `--min-items`)
+- Run history / cost pricing: `newsletter/pricing.yaml`
 
 ## Contributing
 
 1. Fork the repository
 2. Create a new branch (`git checkout -b feature/improvement`)
-3. Make your changes
+3. Make your changes, with tests (`pytest -q`) and lint (`ruff check .`) passing
 4. Commit your changes (`git commit -am 'Add new feature'`)
 5. Push to the branch (`git push origin feature/improvement`)
 6. Create a Pull Request
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-- CrewAI for the AI generation capabilities
-- Streamlit for the web interface
-- wkhtmltopdf for PDF conversion
-
-## Support
-
-For support, please open an issue in the GitHub repository or contact [your-email@example.com].
+This project is licensed under the MIT License, see the LICENSE file for details.
 
 ## Roadmap
 
-- [ ] Add support for custom templates
-- [ ] Implement user authentication
-- [ ] Add more customization options
-- [ ] Enable sharing capabilities
-- [ ] Add export options for different formats
-
-## Authors
-
-- Your Name (@yourgithubhandle)
-
-## Version History
-
-- 0.1.0
-    - Initial Release
-    - Basic newsletter generation
-    - PDF conversion
-    - History tracking
+- [x] Isolated per-run output directories (no cwd collisions)
+- [x] Structured research brief + template-rendered HTML
+- [x] Research guardrails (citation validity, freshness, dedupe, domain cap)
+- [x] PDF rendering under a deny-all network/filesystem policy
+- [x] Offline evals harness with quality checks
+- [x] Run history, cost/latency reporting, CLI
+- [ ] Custom newsletter templates beyond classic/compact
+- [ ] User authentication for the Streamlit UI
+- [ ] Export formats beyond HTML/PDF
