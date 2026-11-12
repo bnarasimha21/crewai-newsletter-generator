@@ -1,0 +1,82 @@
+@page {
+  size: A4;
+  margin: 18mm 16mm;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.5;
+  margin: 0;
+}
+
+h1 {
+  font-size: 22pt;
+  margin: 0 0 4mm 0;
+}
+
+.meta {
+  color: #555;
+  font-size: 9pt;
+  margin-bottom: 6mm;
+}
+
+.intro,
+.outro {
+  margin-bottom: 6mm;
+}
+
+.item {
+  margin-bottom: 6mm;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.item h2 {
+  font-size: 13pt;
+  margin: 0 0 2mm 0;
+}
+
+.item .date-unknown {
+  color: #b05a00;
+  font-size: 8.5pt;
+  font-weight: bold;
+  margin-left: 4pt;
+}
+
+.item .summary {
+  margin: 0 0 1mm 0;
+}
+
+.item .source {
+  font-size: 9pt;
+  color: #555;
+}
+
+.sources {
+  margin-top: 10mm;
+  break-before: page;
+  page-break-before: always;
+}
+
+.sources h2 {
+  font-size: 13pt;
+}
+
+.sources ol {
+  font-size: 9pt;
+  padding-left: 5mm;
+}
+
+.compact .item {
+  margin-bottom: 3mm;
+}
+
+.compact .intro,
+.compact .outro {
+  margin-bottom: 3mm;
+}
