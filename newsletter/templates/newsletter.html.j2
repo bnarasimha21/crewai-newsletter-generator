@@ -1,0 +1,40 @@
+{# Autoescape is ON for this environment (see newsletter/pipeline.py), so a
+   hostile summary like "<script>alert(1)</script>" renders as literal
+   escaped text, never executes or gets parsed as markup. #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ brief.topic }} newsletter - {{ brief.generated_on }}</title>
+<style>
+{% include "print.css" %}
+</style>
+</head>
+<body class="{{ css_class }}">
+  <h1>{{ brief.topic }}</h1>
+  <p class="meta">Generated on {{ brief.generated_on }}</p>
+
+  <div class="intro">{{ brief.intro }}</div>
+
+  {% for item in brief.items %}
+  <div class="item">
+    <h2>{{ item.title }}{% if item.published is none %}<span class="date-unknown">date unknown</span>{% endif %}</h2>
+    <p class="summary">{{ item.summary }}</p>
+    <p class="source">
+      {{ item.source_name }}{% if item.published %} &middot; {{ item.published }}{% endif %}
+    </p>
+  </div>
+  {% endfor %}
+
+  <div class="outro">{{ brief.outro }}</div>
+
+  <div class="sources">
+    <h2>Sources</h2>
+    <ol>
+    {% for item in brief.items %}
+      <li><a href="{{ item.source_url }}">{{ item.source_name }}</a></li>
+    {% endfor %}
+    </ol>
+  </div>
+</body>
+</html>

@@ -1,0 +1,33 @@
+{
+  "topic": "space launch",
+  "search_results": [
+    {
+      "title": "Reusable Rocket Completes Tenth Flight",
+      "link": "https://www.spacehub.example.com/reusable-rocket-tenth-flight",
+      "snippet": "A reusable first stage booster flew and landed for the tenth time, lowering the marginal cost of that vehicle's next several launches.",
+      "date": "2 days ago",
+      "source": "Space Hub Example"
+    },
+    {
+      "title": "Small Launcher Startup Reaches Orbit On First Try",
+      "link": "https://venture.example.com/small-launcher-first-orbit",
+      "snippet": "A small satellite launch startup reached orbit on its first attempt, a rare outcome for a new orbital rocket.",
+      "date": "7 days ago",
+      "source": "Venture Example"
+    },
+    {
+      "title": "Space Agency Sets New Lunar Lander Date",
+      "link": "https://labs.example.org/lunar-lander-new-date",
+      "snippet": "A national space agency announced a revised target date for its next crewed lunar lander mission after a hardware review.",
+      "date": "11 days ago",
+      "source": "Labs Example"
+    },
+    {
+      "title": "Satellite Constellation Adds Direct-To-Phone Service",
+      "link": "https://www.spacehub.example.com/constellation-direct-to-phone",
+      "snippet": "A low earth orbit satellite constellation began offering direct-to-phone connectivity in areas with no ground cellular coverage.",
+      "date": "20 days ago",
+      "source": "Space Hub Example"
+    }
+  ]
+}

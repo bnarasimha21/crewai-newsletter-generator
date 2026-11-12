@@ -1,4 +1,6 @@
-crewai[tools]
-pdfkit
-streamlit
-pandas
+crewai[tools]==1.15.*
+streamlit==1.67.*
+pandas>=2.2,<3
+jinja2==3.1.*
+weasyprint==70.0
+pyyaml>=6.0,<7

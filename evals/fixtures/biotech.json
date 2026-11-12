@@ -1,0 +1,33 @@
+{
+  "topic": "biotech",
+  "search_results": [
+    {
+      "title": "Gene Therapy Shows Durable Results In Small Trial",
+      "link": "https://www.healthwire.example.com/gene-therapy-durable-results",
+      "snippet": "A small clinical trial reported that a one-time gene therapy's benefits persisted three years after treatment in most participants.",
+      "date": "3 days ago",
+      "source": "Health Wire Example"
+    },
+    {
+      "title": "Biotech Startup Raises Round For Protein Design Platform",
+      "link": "https://venture.example.com/protein-design-funding-round",
+      "snippet": "A startup building an AI-assisted protein design platform closed a new funding round to expand its wet-lab validation pipeline.",
+      "date": "6 days ago",
+      "source": "Venture Example"
+    },
+    {
+      "title": "Regulator Approves Faster Pathway For Rare Disease Drugs",
+      "link": "https://labs.example.org/rare-disease-fast-pathway",
+      "snippet": "A health regulator approved a faster review pathway for drugs targeting rare diseases with very small patient populations.",
+      "date": "13 days ago",
+      "source": "Labs Example"
+    },
+    {
+      "title": "Lab-Grown Tissue Model Improves Drug Screening",
+      "link": "https://www.healthwire.example.com/lab-tissue-drug-screening",
+      "snippet": "Researchers described a lab-grown tissue model that better predicts how candidate drugs behave in human organs before clinical trials.",
+      "date": "22 days ago",
+      "source": "Health Wire Example"
+    }
+  ]
+}
