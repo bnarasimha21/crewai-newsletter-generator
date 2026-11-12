@@ -13,6 +13,7 @@ can run with no Streamlit installed.
 from __future__ import annotations
 
 import json
+import logging
 import re
 import threading
 import uuid
@@ -30,9 +31,34 @@ from newsletter.models import Brief
 from newsletter.render import html_to_pdf
 from newsletter.trace import Trace, TraceRecorder
 
+logger = logging.getLogger("newsletter.pipeline")
+
 _TEMPLATES_DIR = Path(__file__).parent / "templates"
 _DEFAULT_RUNS_DIR = Path("runs")
 _DEFAULT_HISTORY_DB = _DEFAULT_RUNS_DIR / "history.db"
+
+
+def _safe_start_run(db_path: Path, **kwargs: Any) -> int | None:
+    """Record a run's start without letting a history-db hiccup (e.g. a
+    locked SQLite file under concurrent generate() calls) crash the whole
+    pipeline with an untyped exception. History is supplementary to the
+    actual brief/HTML/PDF a caller gets back, so a failure here is logged
+    and swallowed, never raised.
+    """
+    try:
+        return start_run(db_path, **kwargs)
+    except Exception:  # noqa: BLE001 - history writes must never crash generate()
+        logger.warning("failed to record run start in %s", db_path, exc_info=True)
+        return None
+
+
+def _safe_finish_run(db_path: Path, run_id: int | None, **kwargs: Any) -> None:
+    if run_id is None:
+        return
+    try:
+        finish_run(db_path, run_id, **kwargs)
+    except Exception:  # noqa: BLE001 - history writes must never crash generate()
+        logger.warning("failed to record run finish in %s", db_path, exc_info=True)
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
 
 
@@ -148,7 +174,7 @@ def generate(
 
     run_dir = _make_run_dir(out_path, topic)
     started_at = datetime.now(UTC).isoformat()
-    history_id = start_run(
+    history_id = _safe_start_run(
         history_path, topic=topic, started_at=started_at, run_dir=str(run_dir)
     )
 
@@ -179,7 +205,7 @@ def generate(
     thread.join(timeout=timeout_seconds)
 
     if thread.is_alive():
-        finish_run(
+        _safe_finish_run(
             history_path,
             history_id,
             finished_at=datetime.now(UTC).isoformat(),
@@ -191,7 +217,7 @@ def generate(
     if "error" in error_holder:
         exc = error_holder["error"]
         status = "failed"
-        finish_run(
+        _safe_finish_run(
             history_path,
             history_id,
             finished_at=datetime.now(UTC).isoformat(),
@@ -217,7 +243,7 @@ def generate(
         try:
             html_to_pdf(html, pdf_path)
         except RenderFailed as exc:
-            finish_run(
+            _safe_finish_run(
                 history_path,
                 history_id,
                 finished_at=datetime.now(UTC).isoformat(),
@@ -229,7 +255,7 @@ def generate(
     trace = recorder.finish(search_calls=search_calls)
     (run_dir / "trace.json").write_text(json.dumps(trace.to_dict(), indent=2), encoding="utf-8")
 
-    finish_run(
+    _safe_finish_run(
         history_path,
         history_id,
         finished_at=datetime.now(UTC).isoformat(),

@@ -71,7 +71,19 @@ class RunRecord:
 
 def _connect(db_path: Path) -> sqlite3.Connection:
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(db_path))
+    # `timeout=30` (seconds a writer waits on a lock before raising
+    # OperationalError, not the HTTP kind) plus WAL mode: the sqlite3
+    # default of 5s was found, under an adversarial review of this
+    # rewrite, to be tight enough that two generate() calls (or a run and
+    # a Streamlit history-page read) landing within the same ~5s window
+    # could raise "database is locked" and crash generate() with an
+    # untyped exception, defeating the whole typed-error contract
+    # (SearchFailed/RenderFailed/Timeout) the rewrite was built around.
+    # WAL mode lets readers (list_runs) proceed without blocking on a
+    # writer at all, which is the more common collision (Streamlit's
+    # history table polling while a run is in flight).
+    conn = sqlite3.connect(str(db_path), timeout=30.0)
+    conn.execute("PRAGMA journal_mode=WAL")
     conn.execute(_SCHEMA)
     conn.commit()
     return conn

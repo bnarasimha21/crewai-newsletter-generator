@@ -76,11 +76,28 @@ def test_cli_exits_with_timeout_code_when_the_deadline_is_too_tight(tmp_path: Pa
 
 
 def test_cli_without_llm_provider_fake_and_no_api_key_fails_cleanly(tmp_path: Path) -> None:
-    """With no LLM_PROVIDER=fake and no real API key, the crew's LLM call
-    must fail and the CLI must exit 1 with a JSON error, not crash with an
-    unhandled traceback."""
+    """With no LLM_PROVIDER=fake and no reachable LLM endpoint, the crew's
+    LLM call must fail and the CLI must exit 1 with a JSON error, not crash
+    with an unhandled traceback or time out."""
     out_dir = tmp_path / "runs"
-    env = {**os.environ, "OPENAI_API_KEY": "sk-test-invalid-not-a-real-key", "SERPER_API_KEY": "test-invalid-not-a-real-key"}
+    env = {
+        **os.environ,
+        "OPENAI_API_KEY": "sk-test-invalid-not-a-real-key",
+        "SERPER_API_KEY": "test-invalid-not-a-real-key",
+        # Point the OpenAI client at a closed local port instead of the
+        # real api.openai.com. Originally this test relied on a genuine
+        # network round trip to get a 401, which an adversarial review
+        # flagged as flaky: in a no-egress sandbox or CI runner, the
+        # connection attempt doesn't fail fast with 401, it hangs or fails
+        # with a different error (or even times out past the 20s pipeline
+        # deadline, flipping the result to the "timeout" exit code 2 this
+        # test does not expect). A closed loopback port refuses the
+        # connection immediately and deterministically everywhere,
+        # regardless of egress policy, while still exercising the same
+        # "LLM call fails -> CLI exits 1 with a JSON error" path.
+        "OPENAI_BASE_URL": "http://127.0.0.1:1",
+        "OPENAI_API_BASE": "http://127.0.0.1:1",
+    }
     # Explicitly deleted, not just absent from the overrides dict: `pop` on
     # a dict of overrides never touches a value already inherited from
     # os.environ, so if the ambient shell (or a CI job step) happens to

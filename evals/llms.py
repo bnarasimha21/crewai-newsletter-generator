@@ -68,6 +68,19 @@ def build_do_serverless_llm(model: str | None = None) -> BaseLLM:
 # --disallowedTools actually runs it; passing --disallowedTools as separate
 # argv tokens (not one space-joined string) blocks it and the CLI reports
 # "this session has no Bash tool" instead.
+#
+# This list only names Claude Code's own built-in tools. It does NOT cover
+# mcp__<server>__<tool> names: if the operator's own `claude` CLI has MCP
+# servers configured (settings.json, project .mcp.json, etc.), those tools
+# are not in this list and --disallowedTools would not block them. An
+# adversarial review of this file flagged exactly that gap. The actual fix
+# is --strict-mcp-config below, passed with no --mcp-config of our own,
+# which per `claude --help` makes the CLI use *only* the MCP servers named
+# in --mcp-config ("ignoring all other MCP configurations") - zero in this
+# case, so no MCP server loads at all regardless of the operator's own
+# settings. Not independently reproduced the way the Bash-tool bypass
+# above was (that would mean having a real MCP server configured to test
+# against); documented CLI behavior, not a load-bearing guarantee.
 _DISALLOWED_CLI_TOOLS = [
     "Bash", "Read", "Write", "Edit", "NotebookEdit", "Glob", "Grep",
     "WebFetch", "WebSearch", "Agent",
@@ -116,6 +129,7 @@ class ClaudeCliLLM(BaseLLM):
                     "text",
                     "--disallowedTools",
                     *_DISALLOWED_CLI_TOOLS,
+                    "--strict-mcp-config",
                 ],
                 capture_output=True,
                 text=True,
